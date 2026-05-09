@@ -1,0 +1,16 @@
+.cursor
+.git
+.settings
+src/main/resources/sql
+src/main/resources/*.properties
+src/main/resources/hibernate.cfg.xml
+src/main/webapp/WEB-INF/classes
+src/main/webapp/WEB-INF/lib
+src/test/resources/sql
+src/test/resources/hibernate.cfg.xml
+src/test/resources/*.properties
+target
+WebContent
+.classpath
+.project
+STP-WS.postman_collection.json

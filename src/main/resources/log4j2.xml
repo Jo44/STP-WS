@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project>
+<Configuration xmlns="http://logging.apache.org/log4j/2.0/config" status="INFO">
+	<Appenders>
+		<RollingFile name="FILE" fileName="${env:SAVETHEPLACE}/logs/stp-ws.log"
+			filePattern="$${env:SAVETHEPLACE}/logs/stp-ws.%d{yyyy-MM-dd}-%i.log"
+			append="true">
+			<PatternLayout
+				pattern="%d{yyyy-MM-dd HH:mm:ss} | STP | %-5p | (%F:%L) - %m%n" />
+			<Policies>
+				<TimeBasedTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="10 MB" />
+			</Policies>
+		</RollingFile>
+		<Console name="STDOUT" target="SYSTEM_OUT">
+			<PatternLayout
+				pattern="%d{yyyy-MM-dd HH:mm:ss} | STP | %-5p | (%F:%L) - %m%n" />
+		</Console>
+	</Appenders>
+	<Loggers>
+		<Logger name="fr.stp_ws.logger" level="info" />
+		<Logger name="org.hibernate" level="info" />
+		<Root level="info">
+			<AppenderRef ref="STDOUT" />
+			<AppenderRef ref="FILE" />
+		</Root>
+	</Loggers>
+</Configuration>
