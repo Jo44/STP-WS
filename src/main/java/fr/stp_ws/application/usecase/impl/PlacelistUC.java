@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import fr.stp_ws.application.model.mapper.inter.IBasicPlacelistMapper;
 import fr.stp_ws.application.model.mapper.inter.ICommentMapper;
+import fr.stp_ws.application.model.mapper.inter.ICountMapper;
 import fr.stp_ws.application.model.mapper.inter.IPlaceMapper;
 import fr.stp_ws.application.model.mapper.inter.IPlacelistMapper;
 import fr.stp_ws.application.repository.ICommentRepo;
@@ -25,6 +26,7 @@ import fr.stp_ws.domain.exception.FunctionalException;
 import fr.stp_ws.domain.exception.RestrictedAccessException;
 import fr.stp_ws.domain.exception.TechnicalException;
 import fr.stp_ws.domain.model.dto.resource.CommentDTO;
+import fr.stp_ws.domain.model.dto.resource.CountDTO;
 import fr.stp_ws.domain.model.dto.resource.PlaceDTO;
 import fr.stp_ws.domain.model.dto.resource.PlacelistDTO;
 import fr.stp_ws.domain.model.miscellaneous.EntityCategory;
@@ -38,7 +40,7 @@ import jakarta.inject.Inject;
  * Placelist use-cases implementation
  *
  * @author Jo44
- * @version 1.0 (01/05/2026)
+ * @version 1.1 (12/05/2026)
  * @since 01/05/2026
  */
 public class PlacelistUC implements IPlacelistUC {
@@ -53,12 +55,13 @@ public class PlacelistUC implements IPlacelistUC {
 	private final IPlacelistMapper placelistMapper;
 	private final IBasicPlacelistMapper basicPlacelistMapper;
 	private final ICommentMapper commentMapper;
+	private final ICountMapper countMapper;
 
 	/** Constructor */
 	@Inject
 	public PlacelistUC(IUserRepo userRepo, IPlaceRepo placeRepo, IPlacelistRepo placelistRepo, ICommentRepo commentRepo,
 			IPlacelistService placelistService, IPlaceMapper placeMapper, IPlacelistMapper placelistMapper,
-			IBasicPlacelistMapper basicPlacelistMapper, ICommentMapper commentMapper) {
+			IBasicPlacelistMapper basicPlacelistMapper, ICommentMapper commentMapper, ICountMapper countMapper) {
 		this.userRepo = userRepo;
 		this.placeRepo = placeRepo;
 		this.placelistRepo = placelistRepo;
@@ -68,9 +71,10 @@ public class PlacelistUC implements IPlacelistUC {
 		this.placelistMapper = placelistMapper;
 		this.basicPlacelistMapper = basicPlacelistMapper;
 		this.commentMapper = commentMapper;
+		this.countMapper = countMapper;
 	}
 
-	/* Placelist - Get */
+	/* Placelist - Get / Count */
 
 	/**
 	 * Get all placelists (according to the parameters)
@@ -132,6 +136,22 @@ public class PlacelistUC implements IPlacelistUC {
 		placelistService.canGet(user, placelist);
 		// Convert placelist to DTO
 		return placelistMapper.toDTO(placelist, placelistMode, commentMode);
+	}
+
+	/**
+	 * Count owner placelists
+	 *
+	 * @param owner
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	public CountDTO countOwnerPlacelists(Integer owner) throws FunctionalException, TechnicalException {
+		LOGGER.debug("Counting owner placelists");
+		// Retrieve current placelists count
+		Integer currentPlacelistsCount = placelistRepo.count(owner);
+		// Convert count to DTO
+		return countMapper.toDTO(currentPlacelistsCount);
 	}
 
 	/* Placelist - Add / Update / Delete */
@@ -220,7 +240,7 @@ public class PlacelistUC implements IPlacelistUC {
 		return placelistMapper.toDTO(deletedPlacelist, PlacelistMode.WITHOUT_PLACES, CommentMode.NONE);
 	}
 
-	/* Comment - Get / Add / Delete */
+	/* Comment - Get / Count / Add / Delete */
 
 	/**
 	 * Get all comments
@@ -245,6 +265,33 @@ public class PlacelistUC implements IPlacelistUC {
 		List<Comment> comments = commentRepo.getAll(placelistId, owner, Placelist.class);
 		// Convert comments to DTOs
 		return commentMapper.toDTOList(comments);
+	}
+
+	/**
+	 * Count owner comment
+	 *
+	 * @param placelistId
+	 * @param owner
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	public CountDTO countOwnerComment(Integer placelistId, Integer owner)
+			throws FunctionalException, TechnicalException {
+		LOGGER.debug("Counting owner comment");
+		// Retrieve user
+		User user = userRepo.getById(owner);
+		// Retrieve placelist
+		Placelist existingPlacelist = placelistRepo.get(placelistId, PlacelistMode.WITHOUT_PLACES, CommentMode.NONE);
+		// Check permission
+		placelistService.canGet(user, existingPlacelist);
+		// Retrieve all comments
+		List<Comment> comments = commentRepo.getAll(placelistId, owner, Placelist.class);
+		// Retrieve current owner comment count
+		Integer currentCommentCount = Math.toIntExact(comments.stream().filter(comment -> comment.getOwner() != null)
+				.filter(comment -> owner.equals(comment.getOwner().getId())).count());
+		// Convert count to DTO
+		return countMapper.toDTO(currentCommentCount);
 	}
 
 	/**
@@ -312,7 +359,31 @@ public class PlacelistUC implements IPlacelistUC {
 		return commentMapper.toDTO(deletedComment);
 	}
 
-	/* Place - Add / Remove */
+	/* Place - Count / Add / Remove */
+
+	/**
+	 * Count all places in the placelist
+	 *
+	 * @param placelistId
+	 * @param owner
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	public CountDTO countPlacesInPlacelist(Integer placelistId, Integer owner)
+			throws FunctionalException, TechnicalException {
+		LOGGER.debug("Counting places in the placelist");
+		// Retrieve user
+		User user = userRepo.getById(owner);
+		// Retrieve placelist
+		Placelist existingPlacelist = placelistRepo.get(placelistId, PlacelistMode.WITHOUT_PLACES, CommentMode.NONE);
+		// Check permission
+		placelistService.canGet(user, existingPlacelist);
+		// Retrieve current places in placelist count
+		Integer currentPlacesInPlacelistCount = placelistRepo.countPlacesIn(placelistId);
+		// Convert count to DTO
+		return countMapper.toDTO(currentPlacesInPlacelistCount);
+	}
 
 	/**
 	 * Add the place to the placelist

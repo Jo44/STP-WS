@@ -25,6 +25,7 @@ import fr.stp_ws.domain.exception.MaxPhotoException;
 import fr.stp_ws.domain.exception.MaxPlaceException;
 import fr.stp_ws.domain.exception.TechnicalException;
 import fr.stp_ws.domain.model.dto.resource.CommentDTO;
+import fr.stp_ws.domain.model.dto.resource.CountDTO;
 import fr.stp_ws.domain.model.dto.resource.PhotoDTO;
 import fr.stp_ws.domain.model.dto.resource.PlaceDTO;
 import fr.stp_ws.domain.model.miscellaneous.EntityCategory;
@@ -41,7 +42,7 @@ import jakarta.ws.rs.core.SecurityContext;
  * Place endpoint tests
  *
  * @author Jo44
- * @version 1.0 (01/05/2026)
+ * @version 1.1 (12/05/2026)
  * @since 01/05/2026
  */
 @DisplayName("Place endpoint tests")
@@ -169,6 +170,24 @@ class PlaceEndpointTest {
 			FunctionalException fex = assertThrows(FunctionalException.class,
 					() -> placeEndpoint.getPlace(validator, placeId));
 			assertNotNull(fex.getMessage());
+		}
+	}
+
+	/** Count owner places endpoint tests */
+	@Nested
+	@DisplayName("Count owner places endpoint tests")
+	class CountOwnerPlacesEndpointTests {
+
+		@Test
+		@DisplayName("Should return count DTO from use case")
+		void shouldReturnCountFromUseCase() throws FunctionalException, TechnicalException {
+			CountDTO expected = new CountDTO();
+			expected.setCount(8);
+			when(placeUC.countOwnerPlaces(1)).thenReturn(expected);
+			CountDTO response = placeEndpoint.countOwnerPlaces();
+			assertNotNull(response);
+			assertEquals(8, response.getCount());
+			verify(placeUC).countOwnerPlaces(1);
 		}
 	}
 
@@ -427,6 +446,35 @@ class PlaceEndpointTest {
 		}
 	}
 
+	/** Count owner comment endpoint tests */
+	@Nested
+	@DisplayName("Count owner comment endpoint tests")
+	class CountOwnerCommentEndpointTests {
+
+		@Test
+		@DisplayName("Should return comment count for place")
+		void shouldReturnCommentCountSuccessfully() throws FunctionalException, TechnicalException {
+			Integer placeId = 1;
+			CountDTO expected = new CountDTO();
+			expected.setCount(1);
+			when(validator.checkID(placeId)).thenReturn(true);
+			when(placeUC.countOwnerComment(placeId, 1)).thenReturn(expected);
+			CountDTO response = placeEndpoint.countOwnerComment(validator, placeId);
+			assertNotNull(response);
+			assertEquals(1, response.getCount());
+			verify(placeUC).countOwnerComment(placeId, 1);
+		}
+
+		@Test
+		@DisplayName("Should throw when place id invalid for comment count")
+		void shouldThrowWhenPlaceIdInvalidForCommentCount() {
+			when(validator.checkID(-1)).thenReturn(false);
+			FunctionalException fex = assertThrows(FunctionalException.class,
+					() -> placeEndpoint.countOwnerComment(validator, -1));
+			assertNotNull(fex.getMessage());
+		}
+	}
+
 	/** Place photos endpoint tests */
 	@Nested
 	@DisplayName("Place photos endpoint tests")
@@ -581,6 +629,35 @@ class PlaceEndpointTest {
 			// When & Then
 			FunctionalException fex = assertThrows(FunctionalException.class,
 					() -> placeEndpoint.deletePhoto(validator, placeId, invalidPhoto));
+			assertNotNull(fex.getMessage());
+		}
+	}
+
+	/** Count photos endpoint tests */
+	@Nested
+	@DisplayName("Count photos endpoint tests")
+	class CountPhotosEndpointTests {
+
+		@Test
+		@DisplayName("Should return photo count for place")
+		void shouldReturnPhotoCountSuccessfully() throws FunctionalException, TechnicalException {
+			Integer placeId = 1;
+			CountDTO expected = new CountDTO();
+			expected.setCount(4);
+			when(validator.checkID(placeId)).thenReturn(true);
+			when(placeUC.countPhotos(placeId, 1)).thenReturn(expected);
+			CountDTO response = placeEndpoint.countPhotos(validator, placeId);
+			assertNotNull(response);
+			assertEquals(4, response.getCount());
+			verify(placeUC).countPhotos(placeId, 1);
+		}
+
+		@Test
+		@DisplayName("Should throw when place id invalid for photo count")
+		void shouldThrowWhenPlaceIdInvalidForPhotoCount() {
+			when(validator.checkID(-1)).thenReturn(false);
+			FunctionalException fex = assertThrows(FunctionalException.class,
+					() -> placeEndpoint.countPhotos(validator, -1));
 			assertNotNull(fex.getMessage());
 		}
 	}

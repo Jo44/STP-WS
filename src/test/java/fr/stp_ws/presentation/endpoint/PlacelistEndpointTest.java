@@ -25,6 +25,7 @@ import fr.stp_ws.domain.exception.MaxPlacelistException;
 import fr.stp_ws.domain.exception.NotAssociatedException;
 import fr.stp_ws.domain.exception.TechnicalException;
 import fr.stp_ws.domain.model.dto.resource.CommentDTO;
+import fr.stp_ws.domain.model.dto.resource.CountDTO;
 import fr.stp_ws.domain.model.dto.resource.PlaceDTO;
 import fr.stp_ws.domain.model.dto.resource.PlacelistDTO;
 import fr.stp_ws.domain.model.miscellaneous.EntityCategory;
@@ -40,7 +41,7 @@ import jakarta.ws.rs.core.SecurityContext;
  * Placelist endpoint tests
  *
  * @author Jo44
- * @version 1.0 (01/05/2026)
+ * @version 1.1 (12/05/2026)
  * @since 01/05/2026
  */
 @DisplayName("Placelist endpoint tests")
@@ -146,6 +147,24 @@ class PlacelistEndpointTest {
 			FunctionalException fex = assertThrows(FunctionalException.class,
 					() -> placelistEndpoint.getPlacelist(validator, invalidId));
 			assertNotNull(fex.getMessage());
+		}
+	}
+
+	/** Count owner placelists endpoint tests */
+	@Nested
+	@DisplayName("Count owner placelists endpoint tests")
+	class CountOwnerPlacelistsEndpointTests {
+
+		@Test
+		@DisplayName("Should return count DTO from use case")
+		void shouldReturnCountFromUseCase() throws FunctionalException, TechnicalException {
+			CountDTO expected = new CountDTO();
+			expected.setCount(3);
+			when(placelistUC.countOwnerPlacelists(USER_ID)).thenReturn(expected);
+			CountDTO response = placelistEndpoint.countOwnerPlacelists();
+			assertNotNull(response);
+			assertEquals(3, response.getCount());
+			verify(placelistUC).countOwnerPlacelists(USER_ID);
 		}
 	}
 
@@ -399,10 +418,62 @@ class PlacelistEndpointTest {
 		}
 	}
 
+	/** Count owner comment placelist endpoint tests */
+	@Nested
+	@DisplayName("Count owner comment endpoint tests")
+	class CountOwnerCommentEndpointTests {
+
+		@Test
+		@DisplayName("Should return comment count for placelist")
+		void shouldReturnCommentCountSuccessfully() throws FunctionalException, TechnicalException {
+			Integer placelistId = 1;
+			CountDTO expected = new CountDTO();
+			expected.setCount(1);
+			when(validator.checkID(placelistId)).thenReturn(true);
+			when(placelistUC.countOwnerComment(placelistId, USER_ID)).thenReturn(expected);
+			CountDTO response = placelistEndpoint.countOwnerComment(validator, placelistId);
+			assertNotNull(response);
+			assertEquals(1, response.getCount());
+			verify(placelistUC).countOwnerComment(placelistId, USER_ID);
+		}
+
+		@Test
+		@DisplayName("Should throw when placelist id invalid for comment count")
+		void shouldThrowWhenPlacelistIdInvalidForCommentCount() {
+			when(validator.checkID(-1)).thenReturn(false);
+			FunctionalException fex = assertThrows(FunctionalException.class,
+					() -> placelistEndpoint.countOwnerComment(validator, -1));
+			assertNotNull(fex.getMessage());
+		}
+	}
+
 	/** Placelist places endpoint tests */
 	@Nested
 	@DisplayName("Placelist places endpoint tests")
 	class PlacelistPlaceManagementEndpointTests {
+
+		@Test
+		@DisplayName("Should return place count for placelist")
+		void shouldReturnPlaceCountSuccessfully() throws FunctionalException, TechnicalException {
+			Integer placelistId = 1;
+			CountDTO expected = new CountDTO();
+			expected.setCount(6);
+			when(validator.checkID(placelistId)).thenReturn(true);
+			when(placelistUC.countPlacesInPlacelist(placelistId, USER_ID)).thenReturn(expected);
+			CountDTO response = placelistEndpoint.countPlacesInPlacelist(validator, placelistId);
+			assertNotNull(response);
+			assertEquals(6, response.getCount());
+			verify(placelistUC).countPlacesInPlacelist(placelistId, USER_ID);
+		}
+
+		@Test
+		@DisplayName("Should throw when placelist id invalid for place count")
+		void shouldThrowWhenPlacelistIdInvalidForPlaceCount() {
+			when(validator.checkID(-1)).thenReturn(false);
+			FunctionalException fex = assertThrows(FunctionalException.class,
+					() -> placelistEndpoint.countPlacesInPlacelist(validator, -1));
+			assertNotNull(fex.getMessage());
+		}
 
 		@Test
 		@DisplayName("Should add place to placelist successfully")

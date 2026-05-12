@@ -28,6 +28,7 @@ import org.mockito.quality.Strictness;
 
 import fr.stp_ws.application.model.mapper.inter.IBasicPlacelistMapper;
 import fr.stp_ws.application.model.mapper.inter.ICommentMapper;
+import fr.stp_ws.application.model.mapper.inter.ICountMapper;
 import fr.stp_ws.application.model.mapper.inter.IPlaceMapper;
 import fr.stp_ws.application.model.mapper.inter.IPlacelistMapper;
 import fr.stp_ws.application.repository.ICommentRepo;
@@ -49,6 +50,7 @@ import fr.stp_ws.domain.exception.NotExistPlacelistException;
 import fr.stp_ws.domain.exception.RestrictedAccessException;
 import fr.stp_ws.domain.exception.TechnicalException;
 import fr.stp_ws.domain.model.dto.resource.CommentDTO;
+import fr.stp_ws.domain.model.dto.resource.CountDTO;
 import fr.stp_ws.domain.model.dto.resource.PlaceDTO;
 import fr.stp_ws.domain.model.dto.resource.PlacelistDTO;
 import fr.stp_ws.domain.model.miscellaneous.EntityCategory;
@@ -61,7 +63,7 @@ import fr.stp_ws.domain.model.miscellaneous.mode.PlacelistMode;
  * Placelist use-cases tests
  *
  * @author Jo44
- * @version 1.0 (01/05/2026)
+ * @version 1.1 (12/05/2026)
  * @since 01/05/2026
  */
 @DisplayName("Placelist use-cases tests")
@@ -87,6 +89,8 @@ public class PlacelistUCTest {
 	private IBasicPlacelistMapper basicPlacelistMapper;
 	@Mock
 	private ICommentMapper commentMapper;
+	@Mock
+	private ICountMapper countMapper;
 	@Mock
 	private IPlacelistService placelistService;
 	private User testUser;
@@ -895,6 +899,96 @@ public class PlacelistUCTest {
 			verify(placelistRepo, times(1)).get(eq(1), eq(PlacelistMode.WITHOUT_PLACES), eq(CommentMode.NONE));
 			verify(placelistService, times(1)).canRemovePlace(eq(testUser), eq(testPlacelist));
 			verify(placelistRepo, times(1)).removePlace(eq(1), eq(999));
+		}
+	}
+
+	/** Count owner placelists tests */
+	@Nested
+	@DisplayName("Count owner placelists tests")
+	class CountOwnerPlacelistsTests {
+
+		@Test
+		@DisplayName("Should return count DTO for owner placelists")
+		void shouldReturnCountDtoForOwnerPlacelists() throws FunctionalException, TechnicalException {
+			CountDTO expected = new CountDTO();
+			expected.setCount(2);
+			when(placelistRepo.count(eq(1))).thenReturn(2);
+			when(countMapper.toDTO(eq(2))).thenReturn(expected);
+			CountDTO result = placelistUC.countOwnerPlacelists(1);
+			assertNotNull(result);
+			assertEquals(2, result.getCount());
+			verify(placelistRepo, times(1)).count(eq(1));
+			verify(countMapper, times(1)).toDTO(eq(2));
+		}
+	}
+
+	/** Count owner comment on placelist tests */
+	@Nested
+	@DisplayName("Count owner comment on placelist tests")
+	class CountOwnerCommentOnPlacelistTests {
+
+		@Test
+		@DisplayName("Should return count of placelist comments by requesting user")
+		void shouldReturnCountOfCommentsByRequestingUser() throws FunctionalException, TechnicalException {
+			CountDTO expected = new CountDTO();
+			expected.setCount(1);
+			when(userRepo.getById(eq(1))).thenReturn(testUser);
+			when(placelistRepo.get(eq(1), eq(PlacelistMode.WITHOUT_PLACES), eq(CommentMode.NONE)))
+					.thenReturn(testPlacelist);
+			when(commentRepo.getAll(eq(1), eq(1), eq(Placelist.class))).thenReturn(testComments);
+			when(countMapper.toDTO(eq(1))).thenReturn(expected);
+			CountDTO result = placelistUC.countOwnerComment(1, 1);
+			assertNotNull(result);
+			assertEquals(1, result.getCount());
+			verify(placelistService, times(1)).canGet(eq(testUser), eq(testPlacelist));
+			verify(countMapper, times(1)).toDTO(eq(1));
+		}
+
+		@Test
+		@DisplayName("Should throw when user cannot access placelist for comment count")
+		void shouldThrowWhenUserCannotAccessPlacelist() throws FunctionalException, TechnicalException {
+			when(userRepo.getById(eq(1))).thenReturn(testUser);
+			when(placelistRepo.get(eq(1), eq(PlacelistMode.WITHOUT_PLACES), eq(CommentMode.NONE)))
+					.thenReturn(testPlacelist);
+			doThrow(new RestrictedAccessException("denied")).when(placelistService).canGet(eq(testUser),
+					eq(testPlacelist));
+			assertThrows(RestrictedAccessException.class, () -> placelistUC.countOwnerComment(1, 1));
+			verify(commentRepo, never()).getAll(any(), any(), any());
+		}
+	}
+
+	/** Count places in placelist tests */
+	@Nested
+	@DisplayName("Count places in placelist tests")
+	class CountPlacesInPlacelistTests {
+
+		@Test
+		@DisplayName("Should return number of places in placelist")
+		void shouldReturnNumberOfPlacesInPlacelist() throws FunctionalException, TechnicalException {
+			CountDTO expected = new CountDTO();
+			expected.setCount(5);
+			when(userRepo.getById(eq(1))).thenReturn(testUser);
+			when(placelistRepo.get(eq(1), eq(PlacelistMode.WITHOUT_PLACES), eq(CommentMode.NONE)))
+					.thenReturn(testPlacelist);
+			when(placelistRepo.countPlacesIn(eq(1))).thenReturn(5);
+			when(countMapper.toDTO(eq(5))).thenReturn(expected);
+			CountDTO result = placelistUC.countPlacesInPlacelist(1, 1);
+			assertNotNull(result);
+			assertEquals(5, result.getCount());
+			verify(placelistRepo, times(1)).countPlacesIn(eq(1));
+			verify(countMapper, times(1)).toDTO(eq(5));
+		}
+
+		@Test
+		@DisplayName("Should throw when user cannot read placelist for place count")
+		void shouldThrowWhenUserCannotReadPlacelist() throws FunctionalException, TechnicalException {
+			when(userRepo.getById(eq(1))).thenReturn(testUser);
+			when(placelistRepo.get(eq(1), eq(PlacelistMode.WITHOUT_PLACES), eq(CommentMode.NONE)))
+					.thenReturn(testPlacelist);
+			doThrow(new RestrictedAccessException("denied")).when(placelistService).canGet(eq(testUser),
+					eq(testPlacelist));
+			assertThrows(RestrictedAccessException.class, () -> placelistUC.countPlacesInPlacelist(1, 1));
+			verify(placelistRepo, never()).countPlacesIn(any());
 		}
 	}
 }

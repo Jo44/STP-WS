@@ -10,6 +10,7 @@ import fr.stp_ws.application.usecase.inter.IPlacelistUC;
 import fr.stp_ws.domain.exception.FunctionalException;
 import fr.stp_ws.domain.exception.TechnicalException;
 import fr.stp_ws.domain.model.dto.resource.CommentDTO;
+import fr.stp_ws.domain.model.dto.resource.CountDTO;
 import fr.stp_ws.domain.model.dto.resource.PlaceDTO;
 import fr.stp_ws.domain.model.dto.resource.PlacelistDTO;
 import fr.stp_ws.domain.model.miscellaneous.EntityCategory;
@@ -30,7 +31,7 @@ import jakarta.ws.rs.core.SecurityContext;
  * Placelist endpoints implementation
  *
  * @author Jo44
- * @version 1.0 (01/05/2026)
+ * @version 1.1 (12/05/2026)
  * @since 01/05/2026
  */
 @Singleton
@@ -115,6 +116,25 @@ public class PlacelistEndpoint extends AbstractEndpoint implements IPlacelistEnd
 			}
 			// Retrieve placelist
 			return placelistUC.get(placelistId, userId, PlacelistMode.WITH_PLACES, CommentMode.MAX_3);
+		});
+	}
+
+	/**
+	 * Count owner placelists
+	 *
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	// Endpoint: /placelist/count
+	@Override
+	public CountDTO countOwnerPlacelists() throws FunctionalException, TechnicalException {
+		LOGGER.info("Placelist Endpoint --> [GET] Placelists count - /placelist/count");
+		return execute(LOGGER, () -> {
+			// Retrieve user ID
+			Integer userId = SecurityContextUser.getUserID(securityContext);
+			// Count owner placelists
+			return placelistUC.countOwnerPlacelists(userId);
 		});
 	}
 
@@ -207,11 +227,11 @@ public class PlacelistEndpoint extends AbstractEndpoint implements IPlacelistEnd
 	 * @throws FunctionalException
 	 * @throws TechnicalException
 	 */
-	// Endpoint: /placelist/comments/{placelistId}
+	// Endpoint: /placelist/comments/list/{placelistId}
 	@Override
 	public List<CommentDTO> getComments(RequestValidator validator, Integer placelistId)
 			throws FunctionalException, TechnicalException {
-		LOGGER.info("Placelist Endpoint --> [GET] Comments - /placelist/comments/" + String.valueOf(placelistId));
+		LOGGER.info("Placelist Endpoint --> [GET] Comments - /placelist/comments/list/" + String.valueOf(placelistId));
 		return execute(LOGGER, () -> {
 			// Retrieve user ID
 			Integer userId = SecurityContextUser.getUserID(securityContext);
@@ -222,6 +242,33 @@ public class PlacelistEndpoint extends AbstractEndpoint implements IPlacelistEnd
 			// Retrieve all comments
 			// Return DTOs
 			return placelistUC.getComments(placelistId, userId);
+		});
+	}
+
+	/**
+	 * Count owner comment
+	 *
+	 * @param validator
+	 * @param placelistId
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	// Endpoint: /placelist/comments/count/{placelistId}
+	@Override
+	public CountDTO countOwnerComment(RequestValidator validator, Integer placelistId)
+			throws FunctionalException, TechnicalException {
+		LOGGER.info("Placelist Endpoint --> [GET] Comments count - /placelist/comments/count/"
+				+ String.valueOf(placelistId));
+		return execute(LOGGER, () -> {
+			// Retrieve user ID
+			Integer userId = SecurityContextUser.getUserID(securityContext);
+			// Check placelist ID
+			if (!validator.checkID(placelistId)) {
+				throw new InvalidRequestException("Invalid placelist ID");
+			}
+			// Count owner comment
+			return placelistUC.countOwnerComment(placelistId, userId);
 		});
 	}
 
@@ -287,7 +334,34 @@ public class PlacelistEndpoint extends AbstractEndpoint implements IPlacelistEnd
 		});
 	}
 
-	/* Place - [POST] / [DELETE] */
+	/* Place - [GET] / [POST] / [DELETE] */
+
+	/**
+	 * Count all places in the placelist
+	 *
+	 * @param validator
+	 * @param placelistId
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	// Endpoint: /placelist/places/count/{placelistId}
+	@Override
+	public CountDTO countPlacesInPlacelist(RequestValidator validator, Integer placelistId)
+			throws FunctionalException, TechnicalException {
+		LOGGER.info("Placelist Endpoint --> [GET] PlacesInPlacelist count - /placelist/places/count/"
+				+ String.valueOf(placelistId));
+		return execute(LOGGER, () -> {
+			// Retrieve user ID
+			Integer userId = SecurityContextUser.getUserID(securityContext);
+			// Check place ID
+			if (!validator.checkID(placelistId)) {
+				throw new InvalidRequestException("Invalid placelist ID");
+			}
+			// Count places in placelist
+			return placelistUC.countPlacesInPlacelist(placelistId, userId);
+		});
+	}
 
 	/**
 	 * Add the place

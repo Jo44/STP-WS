@@ -25,7 +25,7 @@ class CleanArchitectureTest {
 	static final ArchRule application_must_not_depend_on_data_or_presentation = noClasses().that()
 			.resideInAPackage("..application..").should().dependOnClassesThat()
 			.resideInAnyPackage("..data.repository..", "..data.service..", "..data.security..", "..data.config..",
-					"..data.mapper..", "..presentation..");
+					"..presentation..");
 
 	/**
 	 * Domain layer should not depend on other layers

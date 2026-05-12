@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,6 +29,7 @@ import org.mockito.quality.Strictness;
 
 import fr.stp_ws.application.model.mapper.inter.IBasicPlaceMapper;
 import fr.stp_ws.application.model.mapper.inter.ICommentMapper;
+import fr.stp_ws.application.model.mapper.inter.ICountMapper;
 import fr.stp_ws.application.model.mapper.inter.IPhotoMapper;
 import fr.stp_ws.application.model.mapper.inter.IPlaceMapper;
 import fr.stp_ws.application.repository.ICommentRepo;
@@ -47,6 +49,7 @@ import fr.stp_ws.domain.exception.NotExistPhotoException;
 import fr.stp_ws.domain.exception.RestrictedAccessException;
 import fr.stp_ws.domain.exception.TechnicalException;
 import fr.stp_ws.domain.model.dto.resource.CommentDTO;
+import fr.stp_ws.domain.model.dto.resource.CountDTO;
 import fr.stp_ws.domain.model.dto.resource.PhotoDTO;
 import fr.stp_ws.domain.model.dto.resource.PlaceDTO;
 import fr.stp_ws.domain.model.miscellaneous.EntityCategory;
@@ -58,7 +61,7 @@ import fr.stp_ws.domain.model.miscellaneous.mode.PhotoMode;
  * Place use-cases tests
  *
  * @author Jo44
- * @version 1.0 (01/05/2026)
+ * @version 1.1 (12/05/2026)
  * @since 01/05/2026
  */
 @DisplayName("Place use-cases tests")
@@ -84,6 +87,8 @@ public class PlaceUCTest {
 	private ICommentMapper commentMapper;
 	@Mock
 	private IPhotoMapper photoMapper;
+	@Mock
+	private ICountMapper countMapper;
 	@Mock
 	private IPlaceService placeService;
 	private User testUser;
@@ -944,6 +949,111 @@ public class PlaceUCTest {
 			verify(userRepo, times(1)).getById(eq(1));
 			verify(placeRepo, times(1)).get(eq(1), eq(CommentMode.NONE), eq(PhotoMode.NONE));
 			verify(photoRepo, times(1)).get(eq(1));
+		}
+	}
+
+	/** Count owner places tests */
+	@Nested
+	@DisplayName("Count owner places tests")
+	class CountOwnerPlacesTests {
+
+		@Test
+		@DisplayName("Should return count DTO for owner places")
+		void shouldReturnCountDtoForOwnerPlaces() throws FunctionalException, TechnicalException {
+			CountDTO expected = new CountDTO();
+			expected.setCount(4);
+			when(placeRepo.count(eq(1))).thenReturn(4);
+			when(countMapper.toDTO(eq(4))).thenReturn(expected);
+			CountDTO result = placeUC.countOwnerPlaces(1);
+			assertNotNull(result);
+			assertEquals(4, result.getCount());
+			verify(placeRepo, times(1)).count(eq(1));
+			verify(countMapper, times(1)).toDTO(eq(4));
+		}
+	}
+
+	/** Count owner comment tests */
+	@Nested
+	@DisplayName("Count owner comment tests")
+	class CountOwnerCommentTests {
+
+		@Test
+		@DisplayName("Should return count of comments authored by requesting user")
+		void shouldReturnCountOfCommentsByRequestingUser() throws FunctionalException, TechnicalException {
+			CountDTO expected = new CountDTO();
+			expected.setCount(1);
+			when(userRepo.getById(eq(1))).thenReturn(testUser);
+			when(placeRepo.get(eq(1), eq(CommentMode.NONE), eq(PhotoMode.NONE))).thenReturn(testPlace);
+			when(commentRepo.getAll(eq(1), eq(1), eq(Place.class))).thenReturn(List.of(testComment));
+			when(countMapper.toDTO(eq(1))).thenReturn(expected);
+			CountDTO result = placeUC.countOwnerComment(1, 1);
+			assertNotNull(result);
+			assertEquals(1, result.getCount());
+			verify(placeService, times(1)).canGet(eq(testUser), eq(testPlace));
+			verify(countMapper, times(1)).toDTO(eq(1));
+		}
+
+		@Test
+		@DisplayName("Should return zero when only other users commented")
+		void shouldReturnZeroWhenOnlyOtherUsersCommented() throws FunctionalException, TechnicalException {
+			CountDTO expected = new CountDTO();
+			expected.setCount(0);
+			User other = new User();
+			other.setId(2);
+			CommentPlace otherComment = new CommentPlace();
+			otherComment.setId(2);
+			otherComment.setOwner(other);
+			otherComment.setPlace(testPlace);
+			when(userRepo.getById(eq(1))).thenReturn(testUser);
+			when(placeRepo.get(eq(1), eq(CommentMode.NONE), eq(PhotoMode.NONE))).thenReturn(testPlace);
+			when(commentRepo.getAll(eq(1), eq(1), eq(Place.class))).thenReturn(List.of(otherComment));
+			when(countMapper.toDTO(eq(0))).thenReturn(expected);
+			CountDTO result = placeUC.countOwnerComment(1, 1);
+			assertNotNull(result);
+			assertEquals(0, result.getCount());
+			verify(countMapper, times(1)).toDTO(eq(0));
+		}
+
+		@Test
+		@DisplayName("Should throw when user cannot access place for comment count")
+		void shouldThrowWhenUserCannotAccessPlace() throws FunctionalException, TechnicalException {
+			when(userRepo.getById(eq(1))).thenReturn(testUser);
+			when(placeRepo.get(eq(1), eq(CommentMode.NONE), eq(PhotoMode.NONE))).thenReturn(testPlace);
+			doThrow(new RestrictedAccessException("denied")).when(placeService).canGet(eq(testUser), eq(testPlace));
+			assertThrows(RestrictedAccessException.class, () -> placeUC.countOwnerComment(1, 1));
+			verify(commentRepo, never()).getAll(any(), any(), any());
+		}
+	}
+
+	/** Count photos tests */
+	@Nested
+	@DisplayName("Count photos tests")
+	class CountPhotosTests {
+
+		@Test
+		@DisplayName("Should return photo count for accessible place")
+		void shouldReturnPhotoCountForAccessiblePlace() throws FunctionalException, TechnicalException {
+			CountDTO expected = new CountDTO();
+			expected.setCount(3);
+			when(userRepo.getById(eq(1))).thenReturn(testUser);
+			when(placeRepo.get(eq(1), eq(CommentMode.NONE), eq(PhotoMode.NONE))).thenReturn(testPlace);
+			when(photoRepo.count(eq(1))).thenReturn(3);
+			when(countMapper.toDTO(eq(3))).thenReturn(expected);
+			CountDTO result = placeUC.countPhotos(1, 1);
+			assertNotNull(result);
+			assertEquals(3, result.getCount());
+			verify(photoRepo, times(1)).count(eq(1));
+			verify(countMapper, times(1)).toDTO(eq(3));
+		}
+
+		@Test
+		@DisplayName("Should throw when user cannot access place for photo count")
+		void shouldThrowWhenUserCannotAccessPlace() throws FunctionalException, TechnicalException {
+			when(userRepo.getById(eq(1))).thenReturn(testUser);
+			when(placeRepo.get(eq(1), eq(CommentMode.NONE), eq(PhotoMode.NONE))).thenReturn(testPlace);
+			doThrow(new RestrictedAccessException("denied")).when(placeService).canGet(eq(testUser), eq(testPlace));
+			assertThrows(RestrictedAccessException.class, () -> placeUC.countPhotos(1, 1));
+			verify(photoRepo, never()).count(any());
 		}
 	}
 }

@@ -8,6 +8,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 
 import fr.stp_ws.application.config.ILimitsProvider;
 import fr.stp_ws.application.model.mapper.impl.CommentMapper;
+import fr.stp_ws.application.model.mapper.impl.CountMapper;
 import fr.stp_ws.application.model.mapper.impl.PhotoMapper;
 import fr.stp_ws.application.model.mapper.impl.PlaceMapper;
 import fr.stp_ws.application.model.mapper.impl.PlacelistMapper;
@@ -15,6 +16,7 @@ import fr.stp_ws.application.model.mapper.impl.UserMapper;
 import fr.stp_ws.application.model.mapper.inter.IBasicPlaceMapper;
 import fr.stp_ws.application.model.mapper.inter.IBasicPlacelistMapper;
 import fr.stp_ws.application.model.mapper.inter.ICommentMapper;
+import fr.stp_ws.application.model.mapper.inter.ICountMapper;
 import fr.stp_ws.application.model.mapper.inter.IPhotoMapper;
 import fr.stp_ws.application.model.mapper.inter.IPlaceMapper;
 import fr.stp_ws.application.model.mapper.inter.IPlacelistMapper;
@@ -70,7 +72,7 @@ import jakarta.ws.rs.ApplicationPath;
  * Save the Place - WebService - {STP_WS}
  *
  * @author Jo44
- * @version 1.0 (01/05/2026)
+ * @version 1.1 (12/05/2026)
  * @since 01/05/2026
  */
 @ApplicationPath("/api")
@@ -127,6 +129,7 @@ public class Application extends ResourceConfig {
 				bind(PlacelistMapper.class).to(IBasicPlacelistMapper.class).in(Singleton.class);
 				bind(CommentMapper.class).to(ICommentMapper.class).in(Singleton.class);
 				bind(PhotoMapper.class).to(IPhotoMapper.class).in(Singleton.class);
+				bind(CountMapper.class).to(ICountMapper.class).in(Singleton.class);
 
 				// Services
 				bind(LoadingService.class).to(LoadingService.class).in(Singleton.class);

@@ -5,6 +5,7 @@ import java.util.List;
 import fr.stp_ws.domain.exception.FunctionalException;
 import fr.stp_ws.domain.exception.TechnicalException;
 import fr.stp_ws.domain.model.dto.resource.CommentDTO;
+import fr.stp_ws.domain.model.dto.resource.CountDTO;
 import fr.stp_ws.domain.model.dto.resource.PlaceDTO;
 import fr.stp_ws.domain.model.dto.resource.PlacelistDTO;
 import fr.stp_ws.domain.model.miscellaneous.EntityCategory;
@@ -16,7 +17,7 @@ import fr.stp_ws.domain.model.miscellaneous.mode.PlacelistMode;
  * Placelist use-cases interface
  *
  * @author Jo44
- * @version 1.0 (01/05/2026)
+ * @version 1.1 (12/05/2026)
  * @since 01/05/2026
  */
 public interface IPlacelistUC {
@@ -47,6 +48,16 @@ public interface IPlacelistUC {
 	 */
 	public PlacelistDTO get(Integer placelistId, Integer owner, PlacelistMode placelistMode, CommentMode commentMode)
 			throws FunctionalException, TechnicalException;
+
+	/**
+	 * Count owner placelists
+	 *
+	 * @param owner
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	public CountDTO countOwnerPlacelists(Integer owner) throws FunctionalException, TechnicalException;
 
 	/**
 	 * Add the placelist
@@ -94,6 +105,18 @@ public interface IPlacelistUC {
 			throws FunctionalException, TechnicalException;
 
 	/**
+	 * Count owner comment
+	 *
+	 * @param placelistId
+	 * @param owner
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	public CountDTO countOwnerComment(Integer placelistId, Integer owner)
+			throws FunctionalException, TechnicalException;
+
+	/**
 	 * Add the comment to the placelist
 	 *
 	 * @param placelistId
@@ -117,6 +140,18 @@ public interface IPlacelistUC {
 	 * @throws TechnicalException
 	 */
 	public CommentDTO deleteComment(Integer placelistId, Integer commentId, Integer owner)
+			throws FunctionalException, TechnicalException;
+
+	/**
+	 * Count all places in the placelist
+	 *
+	 * @param placelistId
+	 * @param owner
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	public CountDTO countPlacesInPlacelist(Integer placelistId, Integer owner)
 			throws FunctionalException, TechnicalException;
 
 	/**

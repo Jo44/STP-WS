@@ -5,6 +5,7 @@ import java.util.List;
 import fr.stp_ws.domain.exception.FunctionalException;
 import fr.stp_ws.domain.exception.TechnicalException;
 import fr.stp_ws.domain.model.dto.resource.CommentDTO;
+import fr.stp_ws.domain.model.dto.resource.CountDTO;
 import fr.stp_ws.domain.model.dto.resource.PlaceDTO;
 import fr.stp_ws.domain.model.dto.resource.PlacelistDTO;
 import fr.stp_ws.presentation.validator.RequestValidator;
@@ -23,7 +24,7 @@ import jakarta.ws.rs.core.MediaType;
  * Placelist endpoints interface
  *
  * @author Jo44
- * @version 1.0 (01/05/2026)
+ * @version 1.1 (12/05/2026)
  * @since 01/05/2026
  */
 @Produces(MediaType.APPLICATION_JSON)
@@ -55,9 +56,20 @@ public interface IPlacelistEndpoint {
 	 * @throws TechnicalException
 	 */
 	@GET
-	@Path("/{placelistId}")
+	@Path("/{placelistId:\\d+}")
 	public PlacelistDTO getPlacelist(@BeanParam RequestValidator validator,
 			@PathParam("placelistId") Integer placelistId) throws FunctionalException, TechnicalException;
+
+	/**
+	 * Count owner placelists
+	 *
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	@GET
+	@Path("/count")
+	public CountDTO countOwnerPlacelists() throws FunctionalException, TechnicalException;
 
 	/**
 	 * Add the placelist
@@ -95,7 +107,7 @@ public interface IPlacelistEndpoint {
 	 * @throws TechnicalException
 	 */
 	@DELETE
-	@Path("/{placelistId}")
+	@Path("/{placelistId:\\d+}")
 	public PlacelistDTO deletePlacelist(@BeanParam RequestValidator validator,
 			@PathParam("placelistId") Integer placelistId) throws FunctionalException, TechnicalException;
 
@@ -109,8 +121,22 @@ public interface IPlacelistEndpoint {
 	 * @throws TechnicalException
 	 */
 	@GET
-	@Path("/comments/{placelistId}")
+	@Path("/comments/list/{placelistId:\\d+}")
 	public List<CommentDTO> getComments(@BeanParam RequestValidator validator,
+			@PathParam("placelistId") Integer placelistId) throws FunctionalException, TechnicalException;
+
+	/**
+	 * Count owner comment
+	 *
+	 * @param validator
+	 * @param placelistId
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	@GET
+	@Path("/comments/count/{placelistId:\\d+}")
+	public CountDTO countOwnerComment(@BeanParam RequestValidator validator,
 			@PathParam("placelistId") Integer placelistId) throws FunctionalException, TechnicalException;
 
 	/**
@@ -124,7 +150,7 @@ public interface IPlacelistEndpoint {
 	 * @throws TechnicalException
 	 */
 	@POST
-	@Path("/comment/{placelistId}")
+	@Path("/comment/{placelistId:\\d+}")
 	public CommentDTO addComment(@BeanParam RequestValidator validator, @PathParam("placelistId") Integer placelistId,
 			CommentDTO commentDTO) throws FunctionalException, TechnicalException;
 
@@ -139,10 +165,24 @@ public interface IPlacelistEndpoint {
 	 * @throws TechnicalException
 	 */
 	@DELETE
-	@Path("/comment/{placelistId}")
+	@Path("/comment/{placelistId:\\d+}")
 	public CommentDTO deleteComment(@BeanParam RequestValidator validator,
 			@PathParam("placelistId") Integer placelistId, CommentDTO commentDTO)
 			throws FunctionalException, TechnicalException;
+
+	/**
+	 * Count all places in the placelist
+	 *
+	 * @param validator
+	 * @param placelistId
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	@GET
+	@Path("/places/count/{placelistId:\\d+}")
+	public CountDTO countPlacesInPlacelist(@BeanParam RequestValidator validator,
+			@PathParam("placelistId") Integer placelistId) throws FunctionalException, TechnicalException;
 
 	/**
 	 * Add the place
@@ -155,7 +195,7 @@ public interface IPlacelistEndpoint {
 	 * @throws TechnicalException
 	 */
 	@POST
-	@Path("/{placelistId}/place/{placeId}")
+	@Path("/{placelistId:\\d+}/place/{placeId:\\d+}")
 	public PlaceDTO addPlaceToPlacelist(@BeanParam RequestValidator validator,
 			@PathParam("placelistId") Integer placelistId, @PathParam("placeId") Integer placeId)
 			throws FunctionalException, TechnicalException;
@@ -171,7 +211,7 @@ public interface IPlacelistEndpoint {
 	 * @throws TechnicalException
 	 */
 	@DELETE
-	@Path("/{placelistId}/place/{placeId}")
+	@Path("/{placelistId:\\d+}/place/{placeId:\\d+}")
 	public PlaceDTO removePlaceFromPlacelist(@BeanParam RequestValidator validator,
 			@PathParam("placelistId") Integer placelistId, @PathParam("placeId") Integer placeId)
 			throws FunctionalException, TechnicalException;

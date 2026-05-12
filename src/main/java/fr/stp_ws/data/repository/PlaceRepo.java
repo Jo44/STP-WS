@@ -115,7 +115,7 @@ public class PlaceRepo implements IPlaceRepo {
 			} else {
 				if (mine) {
 					if (type != null && type != EntityType.ALL) {
-					query = session.createQuery(getTouristAllMineByType, Place.class);
+						query = session.createQuery(getTouristAllMineByType, Place.class);
 						query.setParameter("type", type);
 					} else {
 						query = session.createQuery(getTouristAllMine, Place.class);

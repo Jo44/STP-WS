@@ -10,6 +10,7 @@ import fr.stp_ws.application.usecase.inter.IPlaceUC;
 import fr.stp_ws.domain.exception.FunctionalException;
 import fr.stp_ws.domain.exception.TechnicalException;
 import fr.stp_ws.domain.model.dto.resource.CommentDTO;
+import fr.stp_ws.domain.model.dto.resource.CountDTO;
 import fr.stp_ws.domain.model.dto.resource.PhotoDTO;
 import fr.stp_ws.domain.model.dto.resource.PlaceDTO;
 import fr.stp_ws.domain.model.miscellaneous.EntityCategory;
@@ -30,7 +31,7 @@ import jakarta.ws.rs.core.SecurityContext;
  * Place endpoints implementation
  *
  * @author Jo44
- * @version 1.0 (01/05/2026)
+ * @version 1.1 (12/05/2026)
  * @since 01/05/2026
  */
 @Singleton
@@ -133,6 +134,25 @@ public class PlaceEndpoint extends AbstractEndpoint implements IPlaceEndpoint {
 	}
 
 	/**
+	 * Count owner places
+	 *
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	// Endpoint: /place/count
+	@Override
+	public CountDTO countOwnerPlaces() throws FunctionalException, TechnicalException {
+		LOGGER.info("Place Endpoint --> [GET] Places count - /place/count");
+		return execute(LOGGER, () -> {
+			// Retrieve user ID
+			Integer userId = SecurityContextUser.getUserID(securityContext);
+			// Count owner places
+			return placeUC.countOwnerPlaces(userId);
+		});
+	}
+
+	/**
 	 * Add the place
 	 *
 	 * @param validator
@@ -221,11 +241,11 @@ public class PlaceEndpoint extends AbstractEndpoint implements IPlaceEndpoint {
 	 * @throws FunctionalException
 	 * @throws TechnicalException
 	 */
-	// Endpoint: /place/comments/{placeId}
+	// Endpoint: /place/comments/list/{placeId}
 	@Override
 	public List<CommentDTO> getComments(RequestValidator validator, Integer placeId)
 			throws FunctionalException, TechnicalException {
-		LOGGER.info("Place Endpoint --> [GET] Comments - /place/comments/" + String.valueOf(placeId));
+		LOGGER.info("Place Endpoint --> [GET] Comments - /place/comments/list/" + String.valueOf(placeId));
 		return execute(LOGGER, () -> {
 			// Retrieve user ID
 			Integer userId = SecurityContextUser.getUserID(securityContext);
@@ -236,6 +256,32 @@ public class PlaceEndpoint extends AbstractEndpoint implements IPlaceEndpoint {
 			// Retrieve all comments
 			// Return DTOs
 			return placeUC.getComments(placeId, userId);
+		});
+	}
+
+	/**
+	 * Count owner comment
+	 *
+	 * @param validator
+	 * @param placeId
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	// Endpoint: /place/comments/count/{placeId}
+	@Override
+	public CountDTO countOwnerComment(RequestValidator validator, Integer placeId)
+			throws FunctionalException, TechnicalException {
+		LOGGER.info("Place Endpoint --> [GET] Comments count - /place/comments/count/" + String.valueOf(placeId));
+		return execute(LOGGER, () -> {
+			// Retrieve user ID
+			Integer userId = SecurityContextUser.getUserID(securityContext);
+			// Check place ID
+			if (!validator.checkID(placeId)) {
+				throw new InvalidRequestException("Invalid place ID");
+			}
+			// Count owner comment
+			return placeUC.countOwnerComment(placeId, userId);
 		});
 	}
 
@@ -312,11 +358,11 @@ public class PlaceEndpoint extends AbstractEndpoint implements IPlaceEndpoint {
 	 * @throws FunctionalException
 	 * @throws TechnicalException
 	 */
-	// Endpoint: /place/photos/{placeId}
+	// Endpoint: /place/photos/list/{placeId}
 	@Override
 	public List<PhotoDTO> getPhotos(RequestValidator validator, Integer placeId)
 			throws FunctionalException, TechnicalException {
-		LOGGER.info("Place Endpoint --> [GET] Photos - /place/photos/" + String.valueOf(placeId));
+		LOGGER.info("Place Endpoint --> [GET] Photos - /place/photos/list/" + String.valueOf(placeId));
 		return execute(LOGGER, () -> {
 			// Retrieve user ID
 			Integer userId = SecurityContextUser.getUserID(securityContext);
@@ -327,6 +373,32 @@ public class PlaceEndpoint extends AbstractEndpoint implements IPlaceEndpoint {
 			// Retrieve all photos
 			// Return DTOs
 			return placeUC.getPhotos(placeId, userId);
+		});
+	}
+
+	/**
+	 * Count all photos
+	 *
+	 * @param validator
+	 * @param placeId
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	// Endpoint: /place/photos/count/{placeId}
+	@Override
+	public CountDTO countPhotos(RequestValidator validator, Integer placeId)
+			throws FunctionalException, TechnicalException {
+		LOGGER.info("Place Endpoint --> [GET] Photos count - /place/photos/count/" + String.valueOf(placeId));
+		return execute(LOGGER, () -> {
+			// Retrieve user ID
+			Integer userId = SecurityContextUser.getUserID(securityContext);
+			// Check place ID
+			if (!validator.checkID(placeId)) {
+				throw new InvalidRequestException("Invalid place ID");
+			}
+			// Count photos
+			return placeUC.countPhotos(placeId, userId);
 		});
 	}
 

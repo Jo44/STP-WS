@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import fr.stp_ws.application.model.mapper.inter.IBasicPlaceMapper;
 import fr.stp_ws.application.model.mapper.inter.ICommentMapper;
+import fr.stp_ws.application.model.mapper.inter.ICountMapper;
 import fr.stp_ws.application.model.mapper.inter.IPhotoMapper;
 import fr.stp_ws.application.model.mapper.inter.IPlaceMapper;
 import fr.stp_ws.application.repository.ICommentRepo;
@@ -25,6 +26,7 @@ import fr.stp_ws.domain.exception.FunctionalException;
 import fr.stp_ws.domain.exception.RestrictedAccessException;
 import fr.stp_ws.domain.exception.TechnicalException;
 import fr.stp_ws.domain.model.dto.resource.CommentDTO;
+import fr.stp_ws.domain.model.dto.resource.CountDTO;
 import fr.stp_ws.domain.model.dto.resource.PhotoDTO;
 import fr.stp_ws.domain.model.dto.resource.PlaceDTO;
 import fr.stp_ws.domain.model.miscellaneous.EntityCategory;
@@ -37,7 +39,7 @@ import jakarta.inject.Inject;
  * Place use-cases implementation
  *
  * @author Jo44
- * @version 1.0 (01/05/2026)
+ * @version 1.1 (12/05/2026)
  * @since 01/05/2026
  */
 public class PlaceUC implements IPlaceUC {
@@ -52,12 +54,13 @@ public class PlaceUC implements IPlaceUC {
 	private final IBasicPlaceMapper basicPlaceMapper;
 	private final ICommentMapper commentMapper;
 	private final IPhotoMapper photoMapper;
+	private final ICountMapper countMapper;
 
 	/** Constructor */
 	@Inject
 	public PlaceUC(IUserRepo userRepo, IPlaceRepo placeRepo, ICommentRepo commentRepo, IPhotoRepo photoRepo,
 			IPlaceService placeService, IPlaceMapper placeMapper, IBasicPlaceMapper basicPlaceMapper,
-			ICommentMapper commentMapper, IPhotoMapper photoMapper) {
+			ICommentMapper commentMapper, IPhotoMapper photoMapper, ICountMapper countMapper) {
 		this.userRepo = userRepo;
 		this.placeRepo = placeRepo;
 		this.commentRepo = commentRepo;
@@ -67,9 +70,10 @@ public class PlaceUC implements IPlaceUC {
 		this.basicPlaceMapper = basicPlaceMapper;
 		this.commentMapper = commentMapper;
 		this.photoMapper = photoMapper;
+		this.countMapper = countMapper;
 	}
 
-	/* Place - Get */
+	/* Place - Get / Count */
 
 	/**
 	 * Get all places (according to the parameters)
@@ -137,6 +141,23 @@ public class PlaceUC implements IPlaceUC {
 		placeService.canGet(user, place);
 		// Convert place to DTO
 		return placeMapper.toDTO(place, commentMode, photoMode);
+	}
+
+	/**
+	 * Count owner places
+	 *
+	 * @param owner
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	@Override
+	public CountDTO countOwnerPlaces(Integer owner) throws FunctionalException, TechnicalException {
+		LOGGER.debug("Counting owner places");
+		// Retrieve current places count
+		Integer currentPlacesCount = placeRepo.count(owner);
+		// Convert count to DTO
+		return countMapper.toDTO(currentPlacesCount);
 	}
 
 	/* Place - Add / Update / Delete */
@@ -226,7 +247,7 @@ public class PlaceUC implements IPlaceUC {
 		return placeMapper.toDTO(deletedPlace, CommentMode.NONE, PhotoMode.NONE);
 	}
 
-	/* Comment - Get / Add / Delete */
+	/* Comment - Get / Count / Add / Delete */
 
 	/**
 	 * Get all comments
@@ -250,6 +271,33 @@ public class PlaceUC implements IPlaceUC {
 		List<Comment> comments = commentRepo.getAll(placeId, owner, Place.class);
 		// Convert comments to DTOs
 		return commentMapper.toDTOList(comments);
+	}
+
+	/**
+	 * Count owner comment
+	 *
+	 * @param placeId
+	 * @param owner
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	@Override
+	public CountDTO countOwnerComment(Integer placeId, Integer owner) throws FunctionalException, TechnicalException {
+		LOGGER.debug("Counting owner comment");
+		// Retrieve user
+		User user = userRepo.getById(owner);
+		// Retrieve place
+		Place existingPlace = placeRepo.get(placeId, CommentMode.NONE, PhotoMode.NONE);
+		// Check permission
+		placeService.canGet(user, existingPlace);
+		// Retrieve all comments
+		List<Comment> comments = commentRepo.getAll(placeId, owner, Place.class);
+		// Retrieve current owner comment count
+		Integer currentCommentCount = Math.toIntExact(comments.stream().filter(comment -> comment.getOwner() != null)
+				.filter(comment -> owner.equals(comment.getOwner().getId())).count());
+		// Convert count to DTO
+		return countMapper.toDTO(currentCommentCount);
 	}
 
 	/**
@@ -314,7 +362,7 @@ public class PlaceUC implements IPlaceUC {
 		return commentMapper.toDTO(deletedComment);
 	}
 
-	/* Photo - Get / Add / Delete */
+	/* Photo - Get / Count / Add / Delete */
 
 	/**
 	 * Get all photos
@@ -338,6 +386,29 @@ public class PlaceUC implements IPlaceUC {
 		List<Photo> photos = photoRepo.getAll(placeId, owner);
 		// Convert photos to DTOs
 		return photoMapper.toDTOList(photos);
+	}
+
+	/**
+	 * Count all photos
+	 *
+	 * @param placeId
+	 * @param owner
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	public CountDTO countPhotos(Integer placeId, Integer owner) throws FunctionalException, TechnicalException {
+		LOGGER.debug("Counting photos");
+		// Retrieve user
+		User user = userRepo.getById(owner);
+		// Retrieve place
+		Place existingPlace = placeRepo.get(placeId, CommentMode.NONE, PhotoMode.NONE);
+		// Check permission
+		placeService.canGet(user, existingPlace);
+		// Retrieve current photos count
+		Integer currentPhotosCount = photoRepo.count(existingPlace.getId());
+		// Convert count to DTO
+		return countMapper.toDTO(currentPhotosCount);
 	}
 
 	/**

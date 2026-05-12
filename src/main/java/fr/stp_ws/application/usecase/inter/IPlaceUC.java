@@ -5,6 +5,7 @@ import java.util.List;
 import fr.stp_ws.domain.exception.FunctionalException;
 import fr.stp_ws.domain.exception.TechnicalException;
 import fr.stp_ws.domain.model.dto.resource.CommentDTO;
+import fr.stp_ws.domain.model.dto.resource.CountDTO;
 import fr.stp_ws.domain.model.dto.resource.PhotoDTO;
 import fr.stp_ws.domain.model.dto.resource.PlaceDTO;
 import fr.stp_ws.domain.model.miscellaneous.EntityCategory;
@@ -16,7 +17,7 @@ import fr.stp_ws.domain.model.miscellaneous.mode.PhotoMode;
  * Place use-cases interface
  *
  * @author Jo44
- * @version 1.0 (01/05/2026)
+ * @version 1.1 (12/05/2026)
  * @since 01/05/2026
  */
 public interface IPlaceUC {
@@ -51,6 +52,16 @@ public interface IPlaceUC {
 	 */
 	public PlaceDTO get(Integer placeId, Integer owner, CommentMode commentMode, PhotoMode photoMode)
 			throws FunctionalException, TechnicalException;
+
+	/**
+	 * Count owner places
+	 *
+	 * @param owner
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	public CountDTO countOwnerPlaces(Integer owner) throws FunctionalException, TechnicalException;
 
 	/**
 	 * Add the place
@@ -97,6 +108,17 @@ public interface IPlaceUC {
 	public List<CommentDTO> getComments(Integer placeId, Integer owner) throws FunctionalException, TechnicalException;
 
 	/**
+	 * Count owner comment
+	 *
+	 * @param placeId
+	 * @param owner
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	public CountDTO countOwnerComment(Integer placeId, Integer owner) throws FunctionalException, TechnicalException;
+
+	/**
 	 * Add the comment to the place
 	 *
 	 * @param placeId
@@ -132,6 +154,17 @@ public interface IPlaceUC {
 	 * @throws TechnicalException
 	 */
 	public List<PhotoDTO> getPhotos(Integer placeId, Integer owner) throws FunctionalException, TechnicalException;
+
+	/**
+	 * Count all photos
+	 *
+	 * @param placeId
+	 * @param owner
+	 * @return CountDTO
+	 * @throws FunctionalException
+	 * @throws TechnicalException
+	 */
+	public CountDTO countPhotos(Integer placeId, Integer owner) throws FunctionalException, TechnicalException;
 
 	/**
 	 * Add the photo to the place
